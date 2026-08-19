@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this replication, cite the original paper and this repository."
+title: "Critical Replication of Finite-Difference Option Pricing"
+type: software
+authors:
+  - given-names: Adam
+version: 1.0.0
+date-released: 2026-08-19
+references:
+  - type: article
+    title: "A Mean Convection Finite Difference Method for Solving Black Scholes Model for Option Pricing"
+    authors:
+      - family-names: Ning
+        given-names: An
+    year: 2023
+    url: "https://arxiv.org/abs/2308.06808"
