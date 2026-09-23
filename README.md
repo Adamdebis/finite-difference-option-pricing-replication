@@ -1,105 +1,110 @@
-# Finite-Difference Option-Pricing Replication
+# Critical Replication of Finite-Difference Option Pricing
 
-A reproducible Python implementation and critical replication of numerical
-Black–Scholes option pricing. The project implements finite-difference and
-Monte Carlo approaches for European option valuation, compares numerical
-results with the closed-form Black–Scholes benchmark, and documents
-reproducibility checks of the referenced methodology.
+An independent computational replication and audit of An Ning (2023),
+[*A Mean Convection Finite Difference Method for Solving Black Scholes Model
+for Option Pricing*](https://arxiv.org/abs/2308.06808).
 
-## Summary
+## Research question
 
-This repository was developed as an independent technical project to practise
-numerical finance, scientific Python, model validation and reproducible
-research workflows.
+Can finite-difference and Monte Carlo methods reproduce European option prices
+under the paper's stated Black-Scholes parameters, and are the paper's reported
+accuracy claims reproducible from the methodological information provided?
 
-It is a reimplementation and audit exercise. It is **not** peer-reviewed
-research, investment advice, or production valuation software.
+## Methods implemented
 
-### What is implemented
+- Analytical Black-Scholes benchmark
+- Explicit finite-difference method
+- Crank-Nicolson finite-difference method
+- Monte Carlo with antithetic variates and a fixed seed
+- Paper-inspired convection-scaling sensitivity experiment
 
-- Closed-form Black–Scholes pricing for European options.
-- Finite-difference option-pricing methods, including Crank–Nicolson-style
-  discretisation where implemented in the source modules.
-- Monte Carlo valuation with variance-reduction checks where implemented.
-- A structured replication workflow separating pricing logic, replication
-  analysis, tests and generated results.
+## Main replication findings
 
-### Validation and reproducibility checks
+- Standard Black-Scholes closely reproduces several reported exact values, but
+  the six-month call values in Tables 1 and 2 are inconsistent with the stated
+  parameters.
+- Tables 3 and 4 are labelled as puts, yet their exact values closely resemble
+  call prices under the spot and strike values stated in the narrative.
+- Independent explicit FDM and Crank-Nicolson implementations closely match the
+  analytical benchmark on the paper's 100-by-1,000 grid.
+- The published MCFDM cannot be uniquely reconstructed because essential flux
+  definitions, the construction of `alpha(S)`, boundary/grid choices, code, and
+  random seeds are not fully specified.
 
-- Numerical prices are compared with the analytical Black–Scholes benchmark.
-- Monte Carlo outputs provide an independent simulation-based check of
-  numerical pricing results.
-- The repository includes automated tests for core pricing functionality.
-- The workflow can be run from the repository root using the replication
-  runner described below.
+For the paper's three-month Table 1 scenario, the independent benchmark is:
+
+| Method | Price | Absolute error vs analytical |
+| --- | ---: | ---: |
+| Analytical Black-Scholes | 0.099025 | 0.000000 |
+| Explicit FDM | 0.099300 | 0.000274 |
+| Crank-Nicolson | 0.099293 | 0.000267 |
+| Monte Carlo (100,000 paths, seed 42) | 0.099774 | 0.000749 |
+
+![Independent method error comparison](results/figures/independent_method_errors.png)
+
+These observations are documented transparently in
+[`docs/PAPER_AUDIT.md`](docs/PAPER_AUDIT.md). The repository does not force its
+calculations to match reported values and does not claim an exact MCFDM
+reproduction.
 
 ## Repository structure
 
 ```text
-.
-├── src/
-│   ├── option_pricing.py    # Pricing routines and numerical methods
-│   ├── replication.py       # Replication and comparison workflow
-│   └── __init__.py
-├── tests/
-│   └── test_option_pricing.py
-├── results/                 # Generated artefacts; see results/README.md
-├── docs/
-├── references/
-├── run_replication.py       # Main replication runner
-├── requirements.txt
-├── CITATION.cff
-└── README.md
+notebooks/
+  00_research_design.ipynb
+  01_black_scholes_benchmark.ipynb
+  02_finite_difference_methods.ipynb
+  03_replication_results.ipynb
+src/
+  option_pricing.py
+  replication.py
+tests/
+  test_option_pricing.py
+results/
+  figures/
+docs/
+  MATH_GUIDE.md
+  PAPER_AUDIT.md
 ```
 
-## Quick start
+## Run locally
 
-Create a virtual environment, install dependencies and run the project from
-the repository root:
+From Anaconda Prompt:
 
 ```bash
-git clone [https://github.com/Adamdebis/finite-difference-option-pricing-replication.git](https://github.com/Adamdebis/finite-difference-option-pricing-replication.git)
-cd finite-difference-option-pricing-replication
-
-python -m venv .venv
-source .venv/bin/activate
-# On Windows: .venv\Scripts\activate
-
-pip install -r requirements.txt
+conda activate paper_env
+python -m pip install -r requirements.txt
 python run_replication.py
+python -m pytest -q
 ```
 
-## Tests
+Open the notebooks in numerical order and select the `paper_env` kernel.
 
-Run the automated test suite with:
+## Reproducibility choices
 
-```bash
-pytest -q
-```
+- Paper grid where stated: 100 asset-price intervals and 1,000 time steps.
+- Upper boundary: four times the larger of spot and strike (documented because
+  the paper does not specify it).
+- Monte Carlo: 100,000 paths, antithetic variates, and explicit seeds.
+- All independent errors are measured against the standard analytical
+  Black-Scholes formula, not against an inconsistent reported value.
 
-The tests are intended to provide checks on core pricing behaviour and support
-reproducibility. Passing tests do not make the implementation production-ready.
+## Skills demonstrated
 
-## Methodological scope
+- Translating a pricing PDE into explicit and Crank-Nicolson grid algorithms
+- Applying linear algebra through a tridiagonal system solve
+- Applying probability through risk-neutral Monte Carlo simulation
+- Measuring numerical error, uncertainty, stability, and runtime
+- Testing put-call parity, method accuracy, and financial monotonicity
+- Auditing a quantitative paper without concealing irreproducible details
 
-The project focuses on European option pricing under the Black–Scholes model.
-The finite-difference component discretises the pricing problem on a numerical
-grid; the Monte Carlo component simulates price paths under the model
-assumptions. The closed-form Black–Scholes price provides an analytical
-benchmark for numerical comparison.
+## Scope
 
-The specific parameter choices, grids, simulation settings and replication
-outputs are generated by the repository workflow.
+This is an educational numerical-analysis project, not financial advice. The
+focus is method validation, reproducibility, error measurement, and critical
+reading of quantitative research.
 
-## Limitations
+## Reference
 
-- The Black–Scholes model makes restrictive assumptions, including constant
-  volatility and a lognormal asset-price process.
-- This project concerns European vanilla options; it is not a general-purpose
-  derivatives library.
-- Finite-difference accuracy depends on boundary conditions, domain truncation
-  and grid resolution.
-- Monte Carlo estimates have sampling uncertainty and depend on the number of
-  simulated paths and random-number configuration.
-- Replication findings should be interpreted as implementation-specific checks,
-  not as a gen
+Ning, A. (2023). *A Mean Convection Finite Difference Method for Solving Black
+Scholes Model for Option Pricing*. arXiv:2308.06808.
